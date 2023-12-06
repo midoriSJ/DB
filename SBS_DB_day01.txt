@@ -1,0 +1,79 @@
+select
+	ename,
+	job,
+	empno,
+	hiredate
+from emp 
+
+select
+	dname,
+	deptno
+from dept
+
+select
+	empno as "사원번호",
+	ename as "사원이름",
+	mgr as "사수번호",
+	job as "직책"
+from emp
+
+select 
+	ename as "사원 이름"
+from emp
+
+select 
+	empno as "사원 번호",
+	ename as "사원 이름"
+from emp
+
+select * from emp
+
+select
+	ename,
+	empno,
+	hiredate,
+	job
+from emp
+where job = 'salesman'
+
+select 
+	empno as "사원번호",
+	ename as "사원이름",
+	job as "직업"
+from emp
+where empno = '7782'
+
+select
+	ename as "사원이름",
+	job as "직책",
+	sal as "급여"
+from emp
+where sal >= 2000
+
+select 
+	ename,
+	job,
+	sal,
+	mgr,
+	hiredate
+from emp
+where hiredate >= '1981-12-03'
+order by hiredate asc
+
+select 
+	ename,
+	job,
+	sal,
+	hiredate
+from emp
+where job = 'manager' and sal >= 2000
+order by sal asc
+
+select 
+	ename,
+	job,
+	hiredate,
+	sal
+from emp
+where hiredate = '1981-12-03' and job = 'analyst'
+order by hiredate asc
