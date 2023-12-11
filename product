@@ -1,0 +1,22 @@
+create table product (
+	p_code varchar(50) not null,
+	p_name varchar(50) not null,
+	p_amount decimal(10) not null,
+	p_price decimal(10) not null,
+
+	constraint pk_code primary key(p_code)
+);
+
+select * from product;
+
+
+insert into product values("S001", "새우깡", 20, 2000);
+insert into product values("S002", "눈을감자", 10, 2000);
+insert into product values("S003", "포카칩", 30, 2000);
+insert into product values("D001", "코카콜라", 30, 2000);
+insert into product values("D002", "칠성사이다", 10, 2000);
+insert into product values("D003", "환타", 15, 1800);
+insert into product values("D004", "파워에이드", 40, 2500);
+insert into product values("C001", "레쓰비", 50, 800);
+insert into product values("C002", "TOP 아메리카노", 30, 2500);
+insert into product values("C003", "칸타타 카페라떼", 30, 2500);
