@@ -1,0 +1,216 @@
+-- 12월 22일
+
+-- 자주 사용하는 문자열 함수
+-- concat : 문자를 합쳐주는 함수
+-- 사원이름 옆에 님이 붙어져 출력
+
+select concat(ename, '님') from emp
+
+-- 테이블 생성
+-- select, delete, update, insert (DML)
+-- create, drop, alter (DDL)
+-- create : 테이블 생성, drop : 테이블 삭제, alter : 테이블 수정
+-- 교재는 217p ~ 
+
+-- commit(TCL)
+-- DML(insert, delete, update) 다음엔 commit
+-- 1. insert into emp(empno, ename) values (9000, '홍길동');
+-- 2. commit(최종 저장);, commit을 입력 x -> insert x
+-- (매우 중요) 지금까지 commit을 사용하지 않고 데이터가 저장, 삭제, 수정되었던 이유
+-- 디비버 같은 프로그램(SQL 편집기)은 자동으로 auto commit이 설정되어 있음
+-- 여러분들이 회사나 학교에서 실수를 방지하고 싶으면 auto commit을 해제해야함.
+
+-- DDL(create, alter, drop)은 commit을 하지 않아도 됨.
+-- DDL은 commit에 영향을 받지 않는다.
+
+-- 테이블 생성
+-- 이름이 x인 테이블 생성
+-- varchar(30) : 30글자 제한
+create table x(
+	empno int comment '사원번호',
+	ename varchar(30) comment '사원이름'	
+);
+
+-- 이름이 y인 테이블 생성
+-- auto_increment : 자동 증가
+-- primary_key : 데이터 중복 방지(pk)
+
+create table y(
+	deptno int auto_increment primary key comment "부서번호",
+	dname varchar(50) comment "부서이름"
+);
+
+insert into y values(1, "영업부서");
+-- insert into y values(1, "기술지원팀");
+-- pk 중복으로 인한 오류 발생!
+insert into y values(2, "기술지원팀");
+
+-- 테이블 삭제
+drop table x;
+drop table y;
+
+-- 참조 키를 넣어서 테이블 생성해보기
+-- 참조 키 혹은 외래키(foreign key)는 테이블 간에 관계를 맺어준다
+-- foreign key a references B(a) : B테이블에 있는 a를 참조하겠다.
+
+create table x(
+	empno int primary key comment "사원번호",
+	ename varchar(30) comment "사원이름",
+	deptno int comment "부서번호",
+	foreign key (deptno) references y(deptno)
+);
+
+create table y(
+	deptno int primary key comment "부서번호",
+	dname varchar(20) comment "부서이름"
+);
+
+insert into y values(1, '영업부서')
+insert into y values(2, '기술지원팀')
+
+insert into x(empno, ename) values(100, '홍길동')
+insert into x(empno, ename) values(200, "박길동")
+
+-- x 테이블에 deptno가 null이 들어가있음.
+-- 즉 fk는 null 허용이 가능하다. pk는 null을 허용하지 않는다.
+
+-- 문제 1. 사원번호가 100번인 사원에 부서번호를 1번, 200번인 사원에 부서번호를 2번으로 수정하시오.
+
+update x set deptno = 1 where empno = 100;
+update x set deptno = 2 where empno = 200;
+
+insert into y values(3, "sales");
+
+-- 부서번호 1번 삭제하기
+
+delete from y where deptno = 2;
+
+-- 부서번호 3번 삭제하기
+
+delete from y where deptno = 3;
+
+-- (매우 중요) on delete 설정 때문에 1번과 2번은 삭제될 수 없다.
+-- fk가 설정되는 순간 데이터 삭제는 까다롭다.
+-- x 테이블에 있는 deptno가 1, 2번임
+-- 1, 2번 deptno는 현재 사용중이기 때문에 삭제할 수 없음.
+
+update x set deptno = 1 where empno = 200;
+-- 위와 같이 수정 후 deptno = 2 구문을 실행시키면 정상 작동된다.
+
+-- y 테이블에서 2번 부서 삭제해보시오
+delete from y where deptno = 2;
+
+-- x 테이블에서 2번 부서를 사원하는 사원이 없으므로 2번 부서 삭제 가능!
+-- fk(참조키)는 테이블 간 데이터를 엄격하게 다룬다. 이는 관계형 데이터베이스를 사용하는 이유 중 하나이다!
+-- MySQL(관계형 데이터베이스 중 하나인 제품)
+
+-- 사용중이어도 삭제를 할 수 있게 설정하기.
+-- (매우 중요) on delete cascade
+
+drop table x
+drop table y
+
+create table y(
+	deptno int primary key comment "부서번호",
+	dname varchar(20) comment "부서이름"
+);
+
+create table x(
+	empno int primary key comment "사원번호",
+	ename varchar(30) comment "사원이름",
+	deptno int comment "부서번호",
+	foreign key (deptno) references y(deptno) on delete cascade
+);
+
+insert into y values(1, '영업부서')
+insert into y values(2, '기술지원팀')
+
+insert into x values(100, '홍길동', 1)
+insert into x values(200, "박길동", 2)
+
+delete from y where deptno = 2;
+
+-- 면접 단골 on delete cascade
+-- 부모 테이블은 dept 자식 테이블은 emp 구조를 가지게 됨.
+-- on delete : 부모 테이블에서 삭제 이벤트가 발생하면 자식 테이블 데이터에 이벤트 발생
+-- on update : 부모 테이블에서 수정 이벤트가 발생하면 자식 테이블 데이터에 이벤트 발생
+
+-- 이벤트 종류
+-- 1. cascade : 자식 테이블 데이터 삭제 or 수정
+-- 2. set null : 자식 테이블 데이터 null 업데이트
+-- 3. set default : 자식 테이블 데이터 default 값으로 변경
+-- 4. restrict(default) : 자식 테이블에서 데이터 사용중일 때 삭제 or 수정 불가능
+-- 5. no action : 자식 테이블 데이터는 변경되지 않는다.
+
+-- 4번 부서 추가
+insert into y values(4, 'dev');
+
+-- 사원 추가
+insert into x(empno, ename, deptno) values(400, 'King', '4');
+
+delete from y where deptno = 4;
+-- on delete cascade로 설정되어 있기 때문에 4번 부서를 가진 사원도 삭제됨!
+
+-- 1:N, M:N, 1:1 관계
+-- emp 테이블과 dept 테이블 관계를 1:N 관계
+-- 여러 명의 사원(N)이 한 개의 부서(1)에 소속될 수 있기 때문!
+
+-- 문제 2. 주제는 영화, 1:N 관계를 가지는 테이블 2개를 만들어 보세요.
+
+drop table movie
+
+create table movie(
+	id int primary key comment "영화 ID",
+	title varchar(20) not null comment "영화 제목",
+	genre varchar(20) not null comment "장르",
+	create_at timestamp default current_timestamp comment "개봉날짜"
+);
+
+create table actor(
+	actor_id int comment "배우 ID",
+	actor_name varchar(20) comment "배우 이름",
+	movie_id int comment "영화 ID",
+	foreign key (movie_id) references movie(id) on delete no action
+);
+
+insert into movie(id, title, genre) values(1, 'Avengers', 'action');
+insert into actor(actor_id, actor_name, movie_id) values(1, 'Chris Evans', 1);
+insert into actor(actor_id, actor_name, movie_id) values(2, 'Robert Downey Jr.', 1);
+insert into actor(actor_id, actor_name, movie_id) values(3, 'Mark Ruffalo', 1);
+insert into actor(actor_id, actor_name, movie_id) values(4, 'Scarlet Johannson', 1);
+
+update actor set actor_name = 'Scarlett Johansson' where actor_id = 4;
+
+
+select * from movie;
+
+-- 문제 3. 어벤져스에 출현한 영화 배우 이름, 배우 아이디 조회하는 SQL문 작성
+
+select actor_name, movie_id from actor;
+
+-- alter 테이블 수정
+alter table movie add column actor_id int comment "배우 ID"
+
+-- insert into movie(id, title, genre) values(1, "Avengers-endgame", "action");
+-- 위 쿼리 오류나는 이유? -> id가 pk라서!
+
+insert into movie(id, title, genre, actor_id) values (2, 'Avengers-Endgame', 'action', 1)
+-- 이렇게 실행하면 한 영화당 한 배우만 출연 가능하다
+-- N(배우) : 1(영화) 관계 성립 시켜야함!
+
+-- movie id가 아닌 actor id로 join하기
+select m.title, a.actor_name
+from movie as m inner join actor as a on m.actor_id = a.actor_id
+
+-- join은 데이터 타입만 같으면 가능하다!
+-- 테이블 생성할 때 foreign key를 설정하지 않아도 join이 가능하다!
+
+-- foreign key 설정 시 장단점
+-- 장점) 각 테이블 관계를 파악하기가 쉽다!
+-- 단점) 데이터 삭제&수정 시 제약사항이 생긴다. on delete 같은 걸 설정해야함...
+
+-- foreign key 없이 join 시 장단점	<- 대형 프로젝트에서 종종 이런 식으로 운영함...
+-- 장점) 데이터를 쉽게 삭제&수정 할 수 있다.
+-- 단점) 테이블 관계를 파악하기 어렵다.
+
+-- (매우 중요) M : N 관계 테이블 작성하기
