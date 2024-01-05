@@ -1,0 +1,130 @@
+-- 0105 수업
+-- 인덱스
+-- Primary key (기본키)
+-- EMP 테이블 기준으로 empno 컬럼에 PK가 설정되어 있다.
+-- PK가 설정되어 있는 컬럼은 기본적(default)으로 NOT NULL과 ***인덱스가 생성됨
+
+-- 인덱스(INDEX)란?
+-- 데이터베이스가 데이터를 빨리 찾을 수 있게 도와줌
+-- 조회할 때, 즉 SELECT 할 때 데이터를 더 빨리 찾을 수 있게 도와줌
+
+-- 데이터가 적으면 오히려 인덱스는 성능 저하의 원인이 된다.
+-- 인덱스는 데이터가 많은 컬럼을 조회할 때 사용해야 한다.
+
+-- 용어 정리
+-- 데이터베이스에서 INDEX 종류는 크게 2가지
+-- 1. 클러스터 인덱스(PRIMARY KEY INDEX)
+-- 2. 보조 인덱스(UNIQUE)
+-- 실무에선 그냥 인덱스라고 한다.
+
+-- (중요) MySQL은 FK 컬럼에도 INDEX를 부여한다. (Oracle은 아님)
+-- 인덱스는 ***B-Tree(이진 트리)라는 자료 구조를 베이스로 실행 된다.
+-- 보조 인덱스는 일반 책에 목차와 같고, 클러스터 인덱스는 영어 사전처럼 정렬되어 있다.
+-- 데이터 양이 많으면 인덱스가 좋고, 데이터 양이 적은데 인덱스를 활용하면 오히려 성능 낭비가 된다.
+
+
+-- 인덱스 생성
+-- 인덱스 조회
+show index from emp
+
+-- empno를 조회하는 쿼리
+-- empno에는 인덱스가 설정되어 있기 때문에 empno를 잘 활용해야 한다.
+select empno from emp
+
+-- 인덱스 생성
+-- idx_emp_sal : 변수명
+-- 보조 인덱스
+-- sal 컬럼에 보조 인덱스 생성
+create index idx_emp_sal on emp (sal)
+
+show index from emp
+
+-- hiredate 컬럼에 보조 인덱스 생성
+create index idx_emp_hiredate on emp (hiredate)
+
+-- 보조 인덱스는 여러 개 만들 수 있지만 클러스터 인덱스는 1개만 만들 수 있다.
+
+-- 급여컬럼과 입사날짜 컬럼에 인덱스를 부여한 상태, 인덱스를 활용해 보자.
+-- 인덱스를 활용하기 위해서는 서술 논리절에 인덱스를 사용해야 한다.
+-- 서술 논리절은 where, order by, group by, having을 의미한다.
+-- 서술 논리절에 인덱스를 활용하는 SQL문을 *****사거블(Sargable) 쿼리라고 한다.
+-- 1. where절을 이요해 인덱스 활용하기
+select sal, hiredate from emp where sal > 1000
+
+-- (중요)주의할 점 : 신입 개발자들이 자주 실수하는 사거블 쿼리 모음
+-- 1. like 앞에 %를 붙이는 경우
+-- ename 컬럼에 인덱스를 부여했다고 가정
+-- like '%H'처럼 앞에 %를 사용하는 경우 인덱스 실행 불가.
+select ename from emp where ename like '%H';
+-- 아래 쿼리는 인덱스가 실행 됨.(%가 앞에 없기 때문)
+select ename from emp where ename like '%H';
+
+-- 2. where절에 수치 연산을 하는 경우
+-- 즉, where절에 인덱스 컬럼인 sal에 연산을 함 => sal * 1.10
+select empno, ename from emp where sal * 1.10 > 3000;
+
+-- 3. 한 개 이상의 필드에 대해 연산하는 함수를 사용하는 쿼리
+-- date_format은 한 개 이상 필드에 연산하는 함수
+select empno, ename from emp where date_format(hiredate, '%Y') >= 1981
+
+-- 인덱스를 돌아가게 하려면 아래와 같이 하면 됨.
+-- cast라는 함수를 이용해 hiredate에 직접 함수를 사용하지 않고 1981년도 이후 입사한 사원번호, 이름을 조회함
+select empno, ename from emp where hiredate >= cast('1981-01-01' as date)
+
+-- 4. 전체 조회할 때
+-- 데이터베이스가 판단할 때, 인덱스가 있더라도 전체 테이블을 검색하는 게 낫겠다고 판단해버림...
+select empno, ename from emp where sal >= 0
+
+-- 인덱스는 부여했는데, 데이터베이스에서 인덱스를 활용하지 못하는 쿼리(논 사거블 쿼리)
+-- 1. like 앞에 %가 있는 경우
+-- 2. 사칙연산을 사용한 경우
+-- 3. 함수를 사용한 경우
+-- 4. 전체 조회하는 구문을 실행할 경우
+
+-- 사거블 쿼리이지만 성능 향상 목적으로는 사용하지 않는 것
+-- 1. in
+-- 2. or
+-- ex) 아래 쿼리는 인덱스를 사용하지만 성능 향상 목적은 아님.
+-- why? in을 사용했기 때문
+select empno, ename from emp where sal in (1250, 3000)
+
+-- 사거블 쿼리이면서 성능 향상 목적!
+-- 1. >, <, >=, <=, =
+-- 2. between
+-- 3. like(앞에 %를 붙이지 않을 때)
+-- 4. is (not) null
+-- ex) 아래 쿼리는 사거블 쿼리이면서 성능 향상이 된다.
+select empno, ename from emp where sal is null
+
+
+show index from emp
+
+-- 인덱스 삭제, 삭제는 잇지만 수정은 없음.
+alter table emp drop index idx_emp_hiredate
+
+-- 인덱스를 생성하는 다른 방법
+-- 1. create index ~ (보조 인덱스)
+-- 2. primary key (클러스터 인덱스)
+-- 3. create table emp (sal int(4) unique) => 뒤에 unique 붙임
+
+-- 인덱스는 데이터가 많을 때 사용하며, 자주 이용하는 컬럼에 생성해주면 된다.
+-- 사거블 쿼리와 논 사거블 쿼리를 주의하자!
+
+-- 데이터가 없을 때 인덱스는 성능 낭비다.
+
+### 프로시저 (마지막 개념)
+-- 프로그래밍에서 함수와 같은 개념, 파라미터와 리턴값이 존재
+-- 프로시저는 DB에 저장되어 필요할 때 호출되어 실행
+-- 동일한 로직을 여러 번 사용할 필요가 있을 때 사용 (재사용성)
+-- 네트워크 비용이 감소하고 성능이 향상된다. (프로시저는 메머리에 계속 저장되어 있다.)
+-- 빈도 수가 적은 SQL문은 굳이 프로시저로 두면 X (대규모 프로젝트에서 많이 사용함, 은행에서 많이 사용)
+
+-- 프로시저 호출하기
+-- () 매개변수, 즉 매개변수가 없는 프로시저를 호출한거임.
+call study.test_proce(1500)
+
+call study.test_proce2()
+
+call study.test_proce3(20)
+
+call study.test_proce4()
